@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+    <title>InsightIQ Dashboard</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/style.css') }}">
+
+</head>
+
+<body>
+
+    <div class="header">
+
+        <h1>📊 InsightIQ Dashboard</h1>
+
+        <p>Business Intelligence Dashboard</p>
+
+    <small>Analyze • Visualize • Decide</small>
+        <div class="cards">
+
+    <div class="card">
+        <h2>Total Sales</h2>
+        <p>${{ "{:,.0f}".format(total_sales) }}</p>
+    </div>
+
+    <div class="card">
+        <h2>Total Profit</h2>
+        <p>${{ "{:,.0f}".format(total_profit) }}</p>
+    </div>
+
+    <div class="card">
+        <h2>Total Customers</h2>
+        <p>{{ total_customers }}</p>
+    </div>
+
+</div>
+
+</body>
+
+</html>
