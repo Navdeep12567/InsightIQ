@@ -54,3 +54,27 @@ div{
 .card:hover{
     transform:translateY(-5px);
 }
+.chart-container{
+    width: 700px;
+    margin: 40px auto;
+    background: white;
+    border-radius: 15px;
+    padding: 20px;
+    box-shadow: 0 4px 15px rgba(0,0,0,.08);
+}
+
+.chart-container img{
+    width:100%;
+    height:auto;
+}
+
+.chart-title{
+    text-align: center;
+    color: #2c3e50;
+    margin-top: 40px;
+}
+.chart-card{
+    width:65%;
+    margin:auto;
+    padding:20px;
+}
