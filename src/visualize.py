@@ -1,135 +1,398 @@
+import os
 import pandas as pd
 import matplotlib.pyplot as plt
-
-# Read Dataset
-df = pd.read_csv("data/Sample - Superstore.csv", encoding="latin1")
-
-# Sales by Category
-sales_by_category = df.groupby("Category")["Sales"].sum()
-
-# Create Bar Chart
-plt.figure(figsize=(6,4))
-sales_by_category.plot(kind="bar")
+import matplotlib.dates as mdates
 
 
-plt.grid(axis="y", linestyle="--", alpha=0.4)
-plt.xlabel("")
-plt.ylabel("Sales")
+def generate_charts(df):
 
-plt.tight_layout(pad=0.5)
+    # Create chart folder
+    os.makedirs("static/images", exist_ok=True)
 
+    df = df.copy()
 
-# Save Chart
-plt.savefig(
-    "static/images/category_sales.png",
-    dpi=180,
-    bbox_inches="tight",
-    pad_inches=0.1
-)
+    # Convert date
+    df["Order Date"] = pd.to_datetime(
+        df["Order Date"],
+        errors="coerce"
+    )
 
-print("Chart Saved Successfully!")
+    # =========================================================
+    # 1. SALES BY CATEGORY
+    # =========================================================
 
-# Monthly Sales Trend
+    sales_by_category = (
+        df.groupby("Category")["Sales"]
+        .sum()
+        .sort_values(ascending=False)
+    )
 
-df["Order Date"] = pd.to_datetime(df["Order Date"])
+    plt.figure(figsize=(7, 4))
 
-monthly_sales = (
-    df.groupby(df["Order Date"].dt.to_period("M"))["Sales"]
-      .sum()
-)
+    sales_by_category.plot(
+        kind="bar",
+        width=0.55
+    )
 
-monthly_sales.index = monthly_sales.index.astype(str)
+    plt.title("Sales by Category", fontsize=14, pad=10)
+    plt.xlabel("")
+    plt.ylabel("Sales ($)")
+    plt.xticks(rotation=0)
+    plt.grid(axis="y", linestyle="--", alpha=0.3)
 
-plt.figure(figsize=(8,4))
+    plt.tight_layout()
 
-plt.plot(
-    monthly_sales.index,
-    monthly_sales.values,
-    marker="o",
-    linewidth=2.5,
-    color="#4F46E5"
-)
+    plt.savefig(
+        "static/images/category_sales.png",
+        dpi=130,
+        bbox_inches="tight"
+    )
 
-plt.title("Monthly Sales Trend")
-plt.xlabel("")
-plt.ylabel("Sales ($)")
-plt.xticks(rotation=45)
+    plt.close()
 
-plt.grid(alpha=0.3)
+    # =========================================================
+    # 2. MONTHLY SALES TREND
+    # =========================================================
 
-plt.tight_layout()
+    monthly_sales = (
+        df.dropna(subset=["Order Date"])
+        .set_index("Order Date")["Sales"]
+        .resample("ME")
+        .sum()
+    )
 
-plt.savefig(
-    "static/images/monthly_sales.png",
-    dpi=150,
-    bbox_inches="tight"
-)
+    plt.figure(figsize=(8, 4))
 
-plt.close()
+    plt.plot(
+        monthly_sales.index,
+        monthly_sales.values,
+        marker="o",
+        linewidth=2,
+        markersize=4
+    )
 
-print("Monthly Sales Chart Saved!")
+    plt.title("Monthly Sales Trend", fontsize=14, pad=10)
+    plt.xlabel("")
+    plt.ylabel("Sales ($)")
 
-# Profit by Region
+    ax = plt.gca()
 
-region_profit = df.groupby("Region")["Profit"].sum()
+    ax.xaxis.set_major_locator(
+        mdates.MonthLocator(interval=3)
+    )
 
-plt.figure(figsize=(7,4))
+    ax.xaxis.set_major_formatter(
+        mdates.DateFormatter("%b %Y")
+    )
 
-region_profit.plot(
-    kind="bar",
-    color=["#2563EB", "#10B981", "#F59E0B", "#EF4444"]
-)
+    plt.xticks(rotation=45, ha="right")
+    plt.grid(alpha=0.25)
 
-plt.title("Profit by Region")
-plt.xlabel("")
-plt.ylabel("Profit ($)")
-plt.xticks(rotation=0)
+    plt.tight_layout()
 
-plt.grid(axis="y", alpha=0.3)
+    plt.savefig(
+        "static/images/monthly_sales.png",
+        dpi=130,
+        bbox_inches="tight"
+    )
 
-plt.tight_layout()
+    plt.close()
 
-plt.savefig(
-    "static/images/profit_region.png",
-    dpi=150,
-    bbox_inches="tight"
-)
+    # =========================================================
+    # 3. 6-MONTH SALES FORECAST
+    # =========================================================
 
-plt.close()
+    if len(monthly_sales) >= 6:
 
-print("Profit by Region Chart Saved!")
+        forecast_value = (
+            monthly_sales
+            .rolling(6)
+            .mean()
+            .iloc[-1]
+        )
 
-# Top 10 States by Sales
+        last_date = monthly_sales.index[-1]
 
-state_sales = (
-    df.groupby("State")["Sales"]
-      .sum()
-      .sort_values(ascending=False)
-      .head(10)
-)
+        forecast_dates = pd.date_range(
+            start=last_date + pd.offsets.MonthEnd(1),
+            periods=6,
+            freq="ME"
+        )
 
-plt.figure(figsize=(8,5))
+        forecast_values = [forecast_value] * 6
 
-state_sales.plot(
-    kind="bar",
-    color="#14B8A6"
-)
+        plt.figure(figsize=(8, 4))
 
-plt.title("Top 10 States by Sales")
-plt.xlabel("")
-plt.ylabel("Sales ($)")
-plt.xticks(rotation=45)
+        plt.plot(
+            monthly_sales.index,
+            monthly_sales.values,
+            marker="o",
+            linewidth=2,
+            label="Actual Sales"
+        )
 
-plt.grid(axis="y", alpha=0.3)
+        plt.plot(
+            forecast_dates,
+            forecast_values,
+            marker="o",
+            linestyle="--",
+            linewidth=2,
+            label="Forecast"
+        )
 
-plt.tight_layout()
+        plt.title(
+            "6-Month Sales Forecast",
+            fontsize=14,
+            pad=10
+        )
 
-plt.savefig(
-    "static/images/top_states_sales.png",
-    dpi=150,
-    bbox_inches="tight"
-)
+        plt.xlabel("")
+        plt.ylabel("Sales ($)")
 
-plt.close()
+        ax = plt.gca()
 
-print("Top States Chart Saved!")
+        ax.xaxis.set_major_locator(
+            mdates.MonthLocator(interval=3)
+        )
+
+        ax.xaxis.set_major_formatter(
+            mdates.DateFormatter("%b %Y")
+        )
+
+        plt.xticks(rotation=45, ha="right")
+
+        plt.grid(alpha=0.25)
+        plt.legend()
+
+        plt.tight_layout()
+
+        plt.savefig(
+            "static/images/sales_forecast.png",
+            dpi=130,
+            bbox_inches="tight"
+        )
+
+        plt.close()
+
+    else:
+
+        plt.figure(figsize=(8, 4))
+
+        plt.text(
+            0.5,
+            0.5,
+            "Not enough data for forecast",
+            ha="center",
+            va="center",
+            fontsize=14
+        )
+
+        plt.axis("off")
+
+        plt.savefig(
+            "static/images/sales_forecast.png",
+            dpi=130,
+            bbox_inches="tight"
+        )
+
+        plt.close()
+
+    # =========================================================
+    # 4. PROFIT BY REGION
+    # =========================================================
+
+    region_profit = (
+        df.groupby("Region")["Profit"]
+        .sum()
+        .sort_values(ascending=False)
+    )
+
+    plt.figure(figsize=(7, 4))
+
+    region_profit.plot(
+        kind="bar",
+        width=0.55
+    )
+
+    plt.title("Profit by Region", fontsize=14, pad=10)
+    plt.xlabel("")
+    plt.ylabel("Profit ($)")
+    plt.xticks(rotation=0)
+    plt.grid(axis="y", alpha=0.3)
+
+    plt.tight_layout()
+
+    plt.savefig(
+        "static/images/profit_region.png",
+        dpi=130,
+        bbox_inches="tight"
+    )
+
+    plt.close()
+
+    # =========================================================
+    # 5. TOP 10 STATES BY SALES
+    # =========================================================
+
+    state_sales = (
+        df.groupby("State")["Sales"]
+        .sum()
+        .sort_values(ascending=False)
+        .head(10)
+    )
+
+    plt.figure(figsize=(8, 4.5))
+
+    state_sales.sort_values().plot(
+        kind="barh",
+        width=0.6
+    )
+
+    plt.title(
+        "Top 10 States by Sales",
+        fontsize=14,
+        pad=10
+    )
+
+    plt.xlabel("Sales ($)")
+    plt.ylabel("")
+    plt.grid(axis="x", alpha=0.3)
+
+    plt.tight_layout()
+
+    plt.savefig(
+        "static/images/top_states_sales.png",
+        dpi=130,
+        bbox_inches="tight"
+    )
+
+    plt.close()
+
+    # =========================================================
+    # 6. TOP 10 PRODUCTS BY SALES
+    # =========================================================
+
+    product_sales = (
+        df.groupby("Product Name")["Sales"]
+        .sum()
+        .sort_values(ascending=False)
+        .head(10)
+    )
+
+    plt.figure(figsize=(8, 5))
+
+    product_sales.sort_values().plot(
+        kind="barh",
+        width=0.6
+    )
+
+    plt.title(
+        "Top 10 Products by Sales",
+        fontsize=14,
+        pad=10
+    )
+
+    plt.xlabel("Sales ($)")
+    plt.ylabel("")
+    plt.grid(axis="x", alpha=0.3)
+
+    plt.tight_layout()
+
+    plt.savefig(
+        "static/images/top_products_sales.png",
+        dpi=130,
+        bbox_inches="tight"
+    )
+
+    plt.close()
+
+    # =========================================================
+    # 7. TOP 10 CUSTOMERS BY SALES
+    # =========================================================
+
+    customer_sales = (
+        df.groupby("Customer Name")["Sales"]
+        .sum()
+        .sort_values(ascending=False)
+        .head(10)
+    )
+
+    plt.figure(figsize=(8, 5))
+
+    if not customer_sales.empty:
+
+        customer_sales.sort_values().plot(
+            kind="barh",
+            width=0.6
+        )
+
+        plt.title(
+            "Top 10 Customers by Sales",
+            fontsize=14,
+            pad=10
+        )
+
+        plt.xlabel("Sales ($)")
+        plt.ylabel("")
+        plt.grid(axis="x", alpha=0.3)
+
+    else:
+
+        plt.text(
+            0.5,
+            0.5,
+            "No customer data available",
+            ha="center",
+            va="center",
+            fontsize=14
+        )
+
+        plt.axis("off")
+
+    plt.tight_layout()
+
+    plt.savefig(
+        "static/images/top_customers_sales.png",
+        dpi=130,
+        bbox_inches="tight"
+    )
+
+    plt.close()
+
+    # =========================================================
+    # 8. PROFIT BY CATEGORY
+    # =========================================================
+
+    profit_by_category = (
+        df.groupby("Category")["Profit"]
+        .sum()
+        .sort_values(ascending=False)
+    )
+
+    plt.figure(figsize=(7, 4))
+
+    profit_by_category.plot(
+        kind="bar",
+        width=0.55
+    )
+
+    plt.title(
+        "Profit by Category",
+        fontsize=14,
+        pad=10
+    )
+
+    plt.xlabel("")
+    plt.ylabel("Profit ($)")
+    plt.xticks(rotation=0)
+    plt.grid(axis="y", alpha=0.3)
+
+    plt.tight_layout()
+
+    plt.savefig(
+        "static/images/profit_category.png",
+        dpi=130,
+        bbox_inches="tight"
+    )
+
+    plt.close()
