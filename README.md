@@ -16,30 +16,28 @@ InsightIQ is a Python-based Business Intelligence and Data Analytics project tha
 - 📅 Year and Monthly Sales Analysis
 - 🔎 Dynamic filtering by Region, Category, and Year
 - 💡 Automated Business Insights
-- 🧠 Data-driven Recommendations
-- 📈 Monthly Sales Trend
+- 🎯 Data-driven Recommendations
+- 📈 Monthly Sales Trend Analysis
 - 🔮 6-Month Sales Forecast
 - 📥 Filtered CSV Data Download
 - 📊 Multiple Business Visualizations
-- 🧪 Project Testing Structure
 
 ---
 
 ## 🛠️ Technologies Used
 
-- **Python**
-- **Pandas**
-- **Matplotlib**
-- **Flask**
-- **HTML5**
-- **CSS3**
-- **Jinja2**
-- **SQL**
-- **Git & GitHub**
+- Python
+- Pandas
+- Matplotlib
+- Flask
+- HTML5
+- CSS3
+- Jinja2
+- Git & GitHub
 
 ---
 
-## 📁 Project Structure
+## 📂 Project Structure
 
 ```text
 InsightIQ/
@@ -55,14 +53,12 @@ InsightIQ/
 │   ├── sql/
 │   ├── utils/
 │   ├── visualization/
-│   │
 │   ├── read_data.py
 │   └── visualize.py
 │
 ├── static/
 │   ├── css/
 │   │   └── style.css
-│   │
 │   └── images/
 │
 ├── templates/
@@ -70,7 +66,7 @@ InsightIQ/
 │
 ├── tests/
 │
-├── .gitignore
 ├── app.py
 ├── README.md
-└── requirements.txt
+├── requirements.txt
+└── .gitignore
